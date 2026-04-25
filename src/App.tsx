@@ -23,138 +23,9 @@ interface Problem {
   };
 }
 
-const PUZZLES: Problem[] = [
-  {
-    id: 1,
-    name: "頭金（あたまきん）",
-    board: {
-      "3,0": { type: "K", enemy: true },
-      "4,0": { type: "L", enemy: true },
-      "2,1": { type: "S", enemy: true },
-      "3,2": { type: "P", enemy: false },
-    },
-    hand: ["G"],
-    solution: { from: null, to: "3,1", pieceType: "G" },
-  },
-  {
-    id: 2,
-    name: "腹銀（はらぎん）",
-    board: {
-      "4,0": { type: "K", enemy: true },
-      "4,1": { type: "P", enemy: true },
-      "3,0": { type: "N", enemy: true },
-      "2,2": { type: "S", enemy: false },
-    },
-    hand: ["S"],
-    solution: { from: null, to: "3,1", pieceType: "S" },
-  },
-  {
-    id: 3,
-    name: "吊るし桂（つるしけい）",
-    board: {
-      "4,0": { type: "K", enemy: true },
-      "4,1": { type: "P", enemy: true },
-      "3,0": { type: "P", enemy: true },
-      "3,1": { type: "P", enemy: true },
-    },
-    hand: ["N"],
-    solution: { from: null, to: "3,2", pieceType: "N" },
-  },
-  {
-    id: 4,
-    name: "尻金（しりきん）",
-    board: {
-      "3,1": { type: "K", enemy: true },
-      "4,1": { type: "P", enemy: true },
-      "2,1": { type: "P", enemy: true },
-      "4,2": { type: "P", enemy: true },
-      "3,2": { type: "P", enemy: true },
-      "2,2": { type: "N", enemy: false },
-    },
-    hand: ["G"],
-    solution: { from: null, to: "3,0", pieceType: "G" },
-  },
-  {
-    id: 5,
-    name: "角のニラミ",
-    board: {
-      "4,1": { type: "K", enemy: true },
-      "4,0": { type: "L", enemy: true },
-      "4,2": { type: "P", enemy: true },
-      "3,1": { type: "P", enemy: true },
-      "3,0": { type: "P", enemy: true },
-      "2,3": { type: "B", enemy: false },
-    },
-    hand: ["G"],
-    solution: { from: null, to: "3,2", pieceType: "G" },
-  },
-  {
-    id: 6,
-    name: "飛車打ち",
-    board: {
-      "4,0": { type: "K", enemy: true },
-      "4,1": { type: "P", enemy: true },
-      "3,1": { type: "P", enemy: false },
-      "2,2": { type: "B", enemy: false },
-    },
-    hand: ["R"],
-    solution: { from: null, to: "3,0", pieceType: "R" },
-  },
-  {
-    id: 7,
-    name: "銀打ち",
-    board: {
-      "4,0": { type: "K", enemy: true },
-      "4,1": { type: "P", enemy: true },
-      "3,0": { type: "P", enemy: true },
-      "3,2": { type: "R", enemy: false },
-    },
-    hand: ["S"],
-    solution: { from: null, to: "3,1", pieceType: "S" },
-  },
-  {
-    id: 8,
-    name: "桂馬打ち",
-    board: {
-      "2,0": { type: "K", enemy: true },
-      "1,0": { type: "L", enemy: true },
-      "3,0": { type: "L", enemy: true },
-      "2,1": { type: "P", enemy: true },
-      "1,1": { type: "P", enemy: true },
-      "3,1": { type: "P", enemy: true },
-      "3,2": { type: "P", enemy: false },
-    },
-    hand: ["N"],
-    solution: { from: null, to: "1,2", pieceType: "N" },
-  },
-  {
-    id: 9,
-    name: "金打ち",
-    board: {
-      "4,2": { type: "K", enemy: true },
-      "4,3": { type: "P", enemy: true },
-      "4,1": { type: "P", enemy: true },
-      "3,3": { type: "S", enemy: false },
-    },
-    hand: ["G"],
-    solution: { from: null, to: "3,2", pieceType: "G" },
-  },
-  {
-    id: 10,
-    name: "両王手風（銀打ち）",
-    board: {
-      "3,1": { type: "K", enemy: true },
-      "4,0": { type: "L", enemy: true },
-      "2,0": { type: "L", enemy: true },
-      "3,0": { type: "S", enemy: true },
-      "4,1": { type: "P", enemy: true },
-      "2,1": { type: "P", enemy: true },
-      "3,3": { type: "G", enemy: false },
-    },
-    hand: ["S"],
-    solution: { from: null, to: "3,2", pieceType: "S" },
-  },
-];
+import defaultPuzzles from "./puzzles.json";
+
+const PUZZLES: Problem[] = defaultPuzzles as Problem[];
 
 const MOVES: Record<string, { dc: number; dr: number; slide?: boolean }[]> = {
   P: [{ dc: 0, dr: -1 }],
@@ -483,16 +354,29 @@ export default function App() {
   }>({ type: "P", enemy: false });
 
   const [puzzles, setPuzzles] = useState<Problem[]>(() => {
-    const saved = localStorage.getItem("doubutsu-shogi-puzzles");
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem("doubutsu-shogi-puzzles");
+      if (saved) {
         return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
       }
+    } catch (e) {
+      console.error(e);
     }
     return PUZZLES;
   });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("doubutsu-shogi-puzzles", JSON.stringify(puzzles));
+    } catch (e) {
+      console.error("Local storage error:", e);
+    }
+    fetch("/api/save-puzzles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ puzzles }),
+    }).catch(e => console.error("Failed to sync puzzles:", e));
+  }, [puzzles]);
 
   useEffect(() => {
     if (puzzleIdx < puzzles.length) {
@@ -524,10 +408,6 @@ export default function App() {
           board,
           hand,
         };
-        localStorage.setItem(
-          "doubutsu-shogi-puzzles",
-          JSON.stringify(newPuzzles),
-        );
         return newPuzzles;
       });
     }
@@ -622,7 +502,6 @@ export default function App() {
 
             setPuzzles(prev => {
               const next = [...prev, ...newProblems];
-              localStorage.setItem("doubutsu-shogi-puzzles", JSON.stringify(next));
               return next;
             });
             setErrorMsg(`${newProblems.length}問インポートしたにゃ！`);
@@ -1149,7 +1028,6 @@ export default function App() {
                               setPuzzles((prev) => {
                                 const next = [...prev];
                                 [next[puzzleIdx - 1], next[puzzleIdx]] = [next[puzzleIdx], next[puzzleIdx - 1]];
-                                localStorage.setItem("doubutsu-shogi-puzzles", JSON.stringify(next));
                                 return next;
                               });
                               setPuzzleIdx(prev => prev - 1);
@@ -1167,7 +1045,6 @@ export default function App() {
                               setPuzzles((prev) => {
                                 const next = [...prev];
                                 [next[puzzleIdx + 1], next[puzzleIdx]] = [next[puzzleIdx], next[puzzleIdx + 1]];
-                                localStorage.setItem("doubutsu-shogi-puzzles", JSON.stringify(next));
                                 return next;
                               });
                               setPuzzleIdx(prev => prev + 1);
@@ -1183,7 +1060,6 @@ export default function App() {
                           onClick={() => {
                             setPuzzles(prev => {
                               const next = prev.filter((_, i) => i !== puzzleIdx);
-                              localStorage.setItem("doubutsu-shogi-puzzles", JSON.stringify(next));
                               return next;
                             });
                             setPuzzleIdx(prev => Math.max(0, Math.min(prev, puzzles.length - 2)));
