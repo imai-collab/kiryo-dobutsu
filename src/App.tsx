@@ -25,8 +25,6 @@ interface Problem {
 
 import defaultPuzzles from "./puzzles.json";
 
-const PUZZLES: Problem[] = defaultPuzzles as Problem[];
-
 const MOVES: Record<string, { dc: number; dr: number; slide?: boolean }[]> = {
   P: [{ dc: 0, dr: -1 }],
   L: [{ dc: 0, dr: -1, slide: true }],
@@ -353,24 +351,9 @@ export default function App() {
     enemy: boolean;
   }>({ type: "P", enemy: false });
 
-  const [puzzles, setPuzzles] = useState<Problem[]>(() => {
-    try {
-      const saved = localStorage.getItem("doubutsu-shogi-puzzles");
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    return PUZZLES;
-  });
+  const [puzzles, setPuzzles] = useState<Problem[]>(defaultPuzzles as Problem[]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem("doubutsu-shogi-puzzles", JSON.stringify(puzzles));
-    } catch (e) {
-      console.error("Local storage error:", e);
-    }
     fetch("/api/save-puzzles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
